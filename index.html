@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ChessL - The Compact, Human-Editable, Simple Serialization
+  Language</title>
+  <link rel="stylesheet" href="style.css" type="text/css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <div id="wrapper">
+    <h1><a href="https://chess-lang.github.io/">ChessL</a></h1><a href=
+    "https://chess-lang.github.io/"><img id="logo" src=
+    "assets/chessl_logo.png" /></a>
+
+    <h2><b>C</b>ompact, <b>H</b>uman-<b>E</b>ditable, <b>S</b>imple
+    <b>S</b>erialization <b>L</b>anguage</h2>
+
+    <p><strong>ChessL</strong> is a simple serialization and configuration
+    language inspired by TOML and SDLang. It's a superset of JSON that's simple
+    to understand, readable, and easy to edit by hand.</p>
+
+    <h1>Why?</h1>
+
+    <ul>
+      <li><a href="https://www.json.org/">JSON</a> is great, but it has a very
+      low signal-to-noise ratio. It&rsquo;s uncomfortable to edit by hand, and
+      to read.</li>
+
+      <li><a href="https://yaml.org/">YAML</a>, while human-friendly, is an
+      unholy behemoth of a language. The specification is infamous for being
+      more than ten times the size of the JSON spec, with many redundant or
+      unnecessary features (including <a href=
+      "https://stackoverflow.com/questions/3790454/in-yaml-how-do-i-break-a-string-over-multiple-lines/21699210#21699210">
+      9-63 ways of writing a multi-line string</a>).</li>
+
+      <li><a href="https://github.com/toml-lang/toml">TOML</a> is nice for
+      configuration files (which are basically a huge map of key:value pairs),
+      but not as nice for heavily nested objects.</li>
+
+      <li><a href="https://sdlang.org/">SDLang</a> is great, but very
+      uncomfortable to work with (as it&rsquo;s pretty much syntactic sugar for
+      XML) and doesn&rsquo;t have a stable implementation in most sensible
+      languages (Ruby, PHP, but not C? Come on).</li>
+    </ul>
+
+    <p>There exists no serialization format I could find that makes it easy to
+    preserve definition order in associative arrays <em>and</em> to work with
+    them.</p>
+
+    <p>In most JSON implementations, for example, you have two options for an
+    order-preserving associative array:</p>
+
+    <ol>
+      <li>
+        <p>A list of pairs (makes it terrible to look up values by their key,
+        which defeats the purpose of an associative array):</p>
+
+        <div class="highlight">
+          <pre>
+<span class="p">{</span>
+<span class="s2">"order_preserving_map"</span><span class=
+"p">:</span> <span class="p">[</span>
+<span class="p">[</span><span class="s2">"key1"</span><span class=
+"p">,</span> <span class="s2">"value1"</span><span class="p">],</span>
+<span class="p">[</span><span class="s2">"key2"</span><span class=
+"p">,</span> <span class="s2">"value2"</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="p">}</span>
+</pre>
+        </div>
+      </li>
+
+      <li>
+        <p>A normal object with a separate list of keys (makes it even worse to
+        edit by hand):</p>
+
+        <div class="highlight">
+          <pre>
+<span class="p">{</span>
+<span class="s2">"obj"</span><span class="p">:</span> <span class="p">{</span>
+<span class="s2">"key1"</span><span class="p">:</span> <span class=
+"s2">"value1"</span><span class="p">,</span>
+<span class="s2">"key2"</span><span class="p">:</span> <span class=
+"s2">"value2"</span>
+<span class="p">},</span>
+<span class="s2">"obj_keys"</span><span class="p">:</span> <span class=
+"p">[</span><span class="s2">"key1"</span><span class="p">,</span> <span class=
+"s2">"key2"</span><span class="p">]</span>
+<span class="p">}</span>
+</pre>
+        </div>
+      </li>
+    </ol>
+
+    <p>Neither of the two is acceptable for data meant to be edited by
+    hand.</p>
+
+    <h1>Goals</h1>
+
+    <ol>
+      <li>
+        <p>Simple, unambigous grammar.</p>
+
+        <p>One way of specifying multiline strings is fine. We don&rsquo;t need
+        63.</p>
+      </li>
+
+      <li>
+        <p>Human-readable and human-editable.</p>
+
+        <p>YAML, while extremely easy to read, is easily one of the hardest
+        config/serialization languages to edit. JSON has too low a
+        signal-to-noise ratio. SDLang and TOML are excellent, but do not fit
+        the other criteria.</p>
+      </li>
+
+      <li>
+        <p>Easy to work with in code.</p>
+
+        <p>XML-style tree traversal is not easy to work with. JSON-style
+        indexing is easy to work with. JSONPath and XPath are easy to work
+        with.</p>
+      </li>
+
+      <li>
+        <p>Minimal.</p>
+
+        <p>If in doubt, it&rsquo;s better to leave processing to the user than
+        to the parser. We don&rsquo;t need a separate datetime type, since
+        every program that needs to work with dates already has a datetime
+        library that can parse strings.</p>
+      </li>
+
+      <li>
+        <p>Strict.</p>
+
+        <p>The more errors a ChessL parser throws when trying to parse invalid
+        ChessL, the better.</p>
+      </li>
+
+      <li>
+        <p>Associative arrays preserve order.</p>
+
+        <p>This is an implementation detail, but any compliant implementation
+        should preserve order in associative arrays, with an optional flag to
+        disable this behavior.</p>
+      </li>
+
+      <li>
+        <p>Elements of associative arrays and lists can have attributes.</p>
+
+        <p>This is a feature inspired by SDLang. While unconventional and
+        somewhat weird to work with in many programming languages, I&rsquo;ve
+        found that it dramatically boosts the human-readability and
+        human-editability of the language.</p>
+      </li>
+    </ol>
+
+    <h3>Syntax</h3>
+
+    <div class="highlight">
+      <pre>
+<span class="c1"># This is a comment.</span>
+<span class="c1"># Data types</span>
+<span class="na">numbers</span><span class="p">:</span> <span class=
+"p">[</span>
+    <span class="c1"># Integers</span>
+    <span class="mi">42</span>
+    <span class="c1"># Decimals</span>
+    <span class="mf">3.14</span>
+    <span class="c1"># Exponential notation</span>
+    <span class="mf">6.022e23</span>
+<span class="p">]</span>
+<span class="na">strings</span><span class="p">:</span> <span class=
+"p">[</span>
+    <span class="s2">"Single-line strings, surrounded by </span><span class=
+"se">\"</span><span class="s2">quotes</span><span class=
+"se">\"</span><span class="s2">. Here's a newline: </span><span class=
+"se">\n</span><span class="s2">"</span><span class="p">,</span>
+    <span class=
+"sb">`Raw strings (in backticks). This is a backslash and the letter "n": \n`</span><span class="p">,</span>
+    <span class="sd">"""</span>
+<span class=
+"sd">    Triple-quoted strings can span multiple lines. All leading whitespace</span>
+<span class=
+"sd">    inside is trimmed to the first non-whitespace character of the first line.</span>
+<span class=
+"sd">    The first three lines won't be indented, but this one will:</span>
+<span class="sd">        Indented line</span>
+<span class=
+"sd">    You can also escape newlines with backslashes: </span><span class=
+"se">\</span>
+<span class="sd">    this will be on the same line!</span>
+<span class=
+"sd">    A single newline after the opening quotes and before the closing ones is</span>
+<span class="sd">    optional and stripped by the parser.</span>
+<span class="sd">    """</span>
+<span class="p">]</span>
+
+<span class="na">booleans</span><span class="p">:</span> <span class=
+"p">[</span><span class="kc">true</span> <span class=
+"kc">false</span><span class="p">]</span>
+<span class="s2">"null"</span><span class="p">:</span> <span class=
+"kc">null</span>
+
+<span class="na">lists</span><span class="p">:</span> <span class="p">[</span>
+    <span class=
+"c1"># Elements in lists and maps are separated by commas...</span>
+    <span class="p">[</span><span class="mi">1</span><span class=
+"p">,</span> <span class="mi">2</span><span class="p">,</span> <span class=
+"mi">3</span><span class="p">]</span>
+    <span class=
+"c1"># or whitespace! However, if you use commas, you must use them for every</span>
+    <span class="c1"># element:</span>
+    <span class="c1">#</span>
+    <span class="c1">#   [3, 4 5] &lt;- syntax error!</span>
+    <span class="c1">#</span>
+    <span class=
+"c1"># This, however, is fine, as the separators for inner and outer objects</span>
+    <span class="c1"># don't need to be the same.</span>
+    <span class="p">[</span><span class="mi">3</span> <span class=
+"mi">4</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="p">[</span><span class="mi">6</span> <span class=
+"mi">7</span> <span class="mi">8</span><span class="p">]</span> <span class=
+"p">(</span>
+        <span class="na">comment</span><span class="p">:</span> <span class=
+"s2">"List and map elements can have attributes!"</span>
+        <span class="na">elaboration</span><span class=
+"p">:</span> <span class="s2">"They work exactly the same as maps."</span>
+    <span class="p">)</span>
+<span class="p">]</span>
+
+<span class="na">maps</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">key</span><span class="p">:</span> <span class=
+"s2">"value"</span>
+    <span class="na">_keys-can-be-unquoted</span><span class=
+"p">:</span> <span class="kc">true</span>
+    <span class=
+"c1"># A bare key must start with an ASCII letter or underscore, and may only</span>
+    <span class=
+"c1"># contain ASCII letters, numbers, underscores and hyphens. These are all</span>
+    <span class="c1"># syntax errors:</span>
+    <span class="c1">#</span>
+    <span class="c1">#    1numeric_key: "nope"</span>
+    <span class="c1">#    key with spaces: "bad"</span>
+    <span class="c1">#    key,with,commas: "very bad"</span>
+    <span class=
+"c1">#    key:with:colons: "how do you expect to parse this"</span>
+    <span class=
+"c1">#    key&#129318;&zwj;&#9792;&#65039;with&#129318;&zwj;&#9792;&#65039;emoji: "this has too many problems to allow"</span>
+    <span class="c1">#</span>
+    <span class="c1"># If you need any of those, just quote your keys!</span>
+    <span class="s2">":) with quotes, it's ok! &#128076;"</span><span class=
+"p">:</span> <span class="kc">true</span>
+    <span class="mi">1</span><span class="p">:</span> <span class=
+"s2">"numbers, booleans, and null can be keys too"</span>
+    <span class="kc">true</span><span class="p">:</span> <span class=
+"kc">false</span>
+    <span class="kc">null</span><span class="p">:</span> <span class=
+"kc">null</span> <span class="p">()</span>  <span class=
+"c1"># An empty attribute list is allowed, but meaningless.</span>
+<span class="p">}</span>
+</pre>
+    </div>
+
+    <h3>License</h3>
+
+    <p class="copy">Copyright &copy; 2019, Slavfox.</p>
+
+    <p class="copy"><a rel="license" href=
+    "http://creativecommons.org/licenses/by/4.0"><img alt=
+    "Creative Commons License" style="border-width:0" src=
+    "https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />
+    The contents of this website are licensed under the<br />
+    <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons
+    Attribution 4.0 International License</a> .</p>
+  </div>
+</body>
+</html>
