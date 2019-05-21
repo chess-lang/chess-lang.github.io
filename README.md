@@ -1,21 +1,22 @@
-# ChessL
-The **C**ompact, **H**uman-**E**ditable, **S**imple **S**erialization
-**L**anguage.
+# <img src="https://raw.githubusercontent.com/chess-lang/chess-lang.github.io/master/assets/chessl_logo.png" height="40" width="40" align="left" alt="ChessL"> ChessL
+
+[The **C**ompact, **H**uman-**E**ditable, **S**imple **S**erialization
+**L**anguage.](https://chess-lang.github.io/)
 
 **ChessL** is a superset of JSON that's simple to understand, readable, and
 easy to edit by hand.
 
 # Why?
 
-- [JSON]() is great, but it has a very low signal-to-noise ratio. It's
+- [JSON] is great, but it has a very low signal-to-noise ratio. It's
   uncomfortable to edit by hand, and to read.
-- [YAML](), while human-friendly, is an unholy behemoth of a language. The
+- [YAML], while human-friendly, is an unholy behemoth of a language. The
   specification is infamous for being more than ten times the size of the JSON
   spec, with many redundant or unnecessary features (including
   [9-63 ways of writing a multi-line string]).
-- [TOML]() is nice for configuration files (which are basically a huge map of
+- [TOML] is nice for configuration files (which are basically a huge map of
   key:value pairs), but not as nice for heavily nested objects.
-- [SDLang]() is great, but very uncomfortable to work with (as it's pretty much
+- [SDLang] is great, but very uncomfortable to work with (as it's pretty much
   syntactic sugar for XML) and doesn't have a stable implementation in most
   sensible languages (Ruby, PHP, but not C? Come on).
 
@@ -89,15 +90,86 @@ Neither of the two is acceptable for data meant to be edited by hand.
    dramatically boosts the human-readability and human-editability of the
    language.
 
+# Syntax
+
+```
+title: "ChessL syntax example"
+
+# This is a comment.
+# Data types
+numbers: [
+    # Integers
+    42
+    # Decimals
+    3.14
+    # Exponential notation
+    6.022e23
+]
+strings: [
+    "Single-line strings, surrounded by \"quotes\". Here's a newline: \n",
+    `Raw strings (in backticks). This is a backslash and the letter "n": \n`,
+    """
+    Triple-quoted strings can span multiple lines. All leading whitespace
+    inside is trimmed to the first non-whitespace character of the first line.
+    The first three lines won't be indented, but this one will:
+        Indented line
+    You can also escape newlines with backslashes: \
+    this will be on the same line!
+    A single newline after the opening quotes and before the closing ones is
+    optional and stripped by the parser.
+    """
+]
+
+booleans: [true false]
+"null": null
+
+lists: [
+    # Elements in lists and maps are separated by commas...
+    [1, 2, 3]
+    # or whitespace! However, if you use commas, you must use them for every
+    # element:
+    #
+    #   [3, 4 5] <- syntax error!
+    #
+    # This, however, is fine, as the separators for inner and outer objects
+    # don't need to be the same.
+    [3 4 5]
+    [6 7 8] (
+        comment: "List and map elements can have attributes!"
+        elaboration: "They work exactly the same as maps."
+    )
+]
+
+maps: {
+    key: "value"
+    _keys-can-be-unquoted: true
+    # A bare key must start with an ASCII letter or underscore, and may only
+    # contain ASCII letters, numbers, underscores and hyphens. These are all
+    # syntax errors:
+    #
+    #    1numeric_key: "nope"
+    #    key with spaces: "bad"
+    #    key,with,commas: "very bad"
+    #    key:with:colons: "how do you expect to parse this"
+    #    key🤦‍♀️with🤦‍♀️emoji: "this has too many problems to allow"
+    #
+    # If you need any of those, just quote your keys!
+    ":) with quotes, it's ok! 👌": true
+    1: "numbers, booleans, and null can be keys too"
+    true: false
+    null: null ()  # An empty attribute list is allowed, but meaningless.
+}
+```
+
 # License
 
-Copyright (c) 2019 Slavfox
+Copyright (c) 2019 <a href="https://github.com/slavfox">Slavfox</a>
 
 [![License: CC BY
 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 The contents of this repository are licensed under the
-[Creative Commons Attribution 4.0 International]() license.
+[Creative Commons Attribution 4.0 International] license.
 
 
 [JSON]: https://www.json.org/
